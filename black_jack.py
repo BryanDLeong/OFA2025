@@ -58,6 +58,9 @@ def game():
 
         deal_cards(dealer_hand)
         deal_cards(player_hand)
+
+        print("")
+        print(f"Player's Money: ${money}")
         print("")
         print(f"Dealer's hand: {dealer_hand}")
         print(f"Player's hand: {player_hand}")   
@@ -67,7 +70,8 @@ def game():
 
         return dealer_hand, player_hand
 
-    print(f"Player's money: {money}")
+    print("")
+    print(f"Player's money: ${money}")
 
     dealer_hand = []
     player_hand = []
@@ -82,6 +86,8 @@ def game():
     remove_cards(dealer_hand,"start")
     remove_cards(player_hand,"start")
 
+    betting = True
+
     while True:
         game_over = False
         dealer_turn = False
@@ -89,6 +95,19 @@ def game():
         end = False
         player_score = hand_total(player_hand)
         dealer_score = hand_total(dealer_hand)    
+
+        #betting money
+        while betting == True:
+            try:
+                bet = int(input("How much would you like bet? "))      
+                if bet >0 and bet <= money:
+                    betting = False
+                else:
+                    print("Please type a valid number")
+                    bet = int(input("How much would you like bet? ") )        
+            except ValueError:
+                print("Please type a valid input")
+                continue
 
         # checks if deck is empty and adds cards to it
         if deck == []:
@@ -121,27 +140,40 @@ def game():
                 round_over = True
 
         if player_score > 21:
-            print("You busted!")
-            print("You Lose!")
             round_over = True
-            game_over = True
 
         elif dealer_score > 21:
-            print("Dealer busted!")
-            print("You Win!")
-            round_over = True
-            game_over = True            
+            round_over = True        
 
         if round_over == True:
             print("")
             print(f"Dealer's hand: {dealer_hand}")
-            print(f"Player's hand: {str(player_hand)[1:-2]}") 
+            print(f"Player's hand: {player_hand}") 
+
+            if player_score > 21:
+                print("You busted!")
+                print("You Lose!")
+                money -= bet
+                print(f"-${bet}")
+                game_over = True
+
+            elif dealer_score > 21:
+                print("Dealer busted!")
+                print("You Win!")
+                money += bet
+                print(f"+${bet}")                
+                game_over = True
+
             if player_score <= 21 and player_score > dealer_score:
                 print("You Win!")
+                money += bet
+                print(f"+${bet}")                
                 game_over = True
             elif dealer_score<= 21 and dealer_score > player_score:
                 print("You Lose!")
                 game_over = True
+                print(f"-${bet}")                
+                money -= bet
             elif player_score == dealer_score:
                 print("It's a Tie")
                 game_over = True
@@ -154,6 +186,7 @@ def game():
                         game_over = False
                         dealer_hand, player_hand = start_game()
                         round_over = False
+                        betting = True
 
                     elif replay.lower() == "n":
                         end = True
