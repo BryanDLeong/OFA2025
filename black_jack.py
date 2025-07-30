@@ -194,7 +194,6 @@ import random
 #             if end == True:
 #                 break
 
-
 def deal_cards(person):
     for i in range(1, 3):
         person.append(random.choice(deck))
@@ -202,6 +201,9 @@ def deal_cards(person):
             if type(card) == dict:
                 person[i - 1] = card.keys()
 
+def add_suits(person):
+    while len(person) < 2:
+        person.append(random.choice(suits))
 
 # keeps track on how much your hand is
 def hand_total(hand):
@@ -222,10 +224,9 @@ def hand_total(hand):
 
     return score
 
-
 cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, "Jack", "Queen", "King", "Ace"]
 deck = cards * 4
-suit = ["_diamond","_heart","_spade","_club"]*13
+suits = ["_diamond","_heart","_spade","_club"]*4
 discard = []
 
 money = 100
@@ -233,21 +234,29 @@ debt = 0
 
 
 def remove_cards(person, mode):
-    # After dealing the hand
     if mode == "start":
         for card in person:
             discard.append(card)
             deck.pop(deck.index(card))
 
-    print("")
-    print(f"Player's money: ${money}")
+        # After giving them a card
+    elif mode == "end":
+        discard.append(person[len(person)-1])
+        deck.pop(deck.index(person[len(person)-1]))
+        
+    
 
 def start_game():
     dealer_hand = []
+    dealer_suits = []
     player_hand = []
+    player_suits = []
 
     deal_cards(dealer_hand)
     deal_cards(player_hand)
+
+    add_suits(dealer_suits)
+    add_suits(player_suits)
 
     print("")
     print(f"Player's Money: ${money}")
@@ -259,6 +268,21 @@ def start_game():
 
 pygame.init()
 
+
+def end_screen(result):
+    if result == "lose":
+        background_img = pygame.image.load("lose_screen.png").convert()
+        scaled_end_screen = pygame.transform.scale(
+        background_img, (screen_width, screen_height)
+        )
+        screen.fill((0, 0, 0))  # CLEAR screen to prevent menu leak
+        screen.blit(scaled_end_screen,(0,0)) 
+
+    elif result == "win":
+        end_screen = pygame.image.load(f"win_screen.jpeg").convert_alpha()
+        scaled_end_screen = pygame.transform.scale(end_screen, (screen_width, screen_height))
+        screen.fill((0, 0, 0))  # CLEAR screen to prevent menu leak
+        screen.blit(scaled_end_screen,(0,0))
 
 # Screen setup
 screen_width = 800
@@ -333,8 +357,8 @@ def run_blackjack():
             btn = Button(x, y, img, 0.1)
             buttons.append(btn)
             x += 20
-        return buttons
-
+        return buttons    
+    
     #    winter_buttons = create_buttons(winter_cards, 370)
     #    giselle_buttons = create_buttons(giselle_cards, 250)
     #    ningning_buttons = create_buttons(ningning_cards, 120)
@@ -350,10 +374,15 @@ def run_blackjack():
 
 
     dealer_hand = []
+    dealer_suits = []
     player_hand = []
+    player_suits = []
 
     deal_cards(dealer_hand)
     deal_cards(player_hand)
+
+    add_suits(dealer_suits)
+    add_suits(player_suits)
 
     print("")
 
@@ -361,13 +390,12 @@ def run_blackjack():
     remove_cards(player_hand, "start")
 
     card_num_player = 0                             
-    remove_cards(player_hand, "start")
     player_score = hand_total(player_hand)
     for card in player_hand:
         try:
-            card = load_cards(str(player_hand[card_num_player]).lower(), "_heart")
+            card = load_cards(str(player_hand[card_num_player]).lower(), player_suits[card_num_player])
         except FileNotFoundError:
-            card = load_cards(str(player_hand[card_num_player][0]).lower(), "_heart")
+            card = load_cards(str(player_hand[card_num_player][0]).lower(), player_suits[card_num_player])
         card_size = pygame.transform.scale(card[-1], (100, 150))
         screen.blit(card_size, (100+(card_num_player*50), 300))
         card_num_player += 1
@@ -382,9 +410,9 @@ def run_blackjack():
     card_num_dealer += 1   
 
     try:
-        card = load_cards(str(dealer_hand[card_num_dealer]).lower(), "_heart")
+        card = load_cards(str(dealer_hand[card_num_dealer]).lower(), dealer_suits[card_num_dealer])
     except FileNotFoundError:
-        card = load_cards(str(dealer_hand[card_num_dealer][0]).lower(), "_heart")
+        card = load_cards(str(dealer_hand[card_num_dealer][0]).lower(), dealer_suits[card_num_dealer])
     card_size = pygame.transform.scale(card[-1], (100, 150))
     screen.blit(card_size, (100+(card_num_dealer*50), 10))
     card_num_dealer += 1   
@@ -392,8 +420,6 @@ def run_blackjack():
     # Blackjack loop
     running = True
     while running:
-
-        
 
         round_over = False
         player_score = hand_total(player_hand)
@@ -417,34 +443,49 @@ def run_blackjack():
         if back_button.draw(screen):
             return  # Exit blackjack screen
         if deal_button.draw(screen):
-            player_hand.append(random.choice(deck))  
+            player_hand.append(random.choice(deck)) 
+            player_suits.append(random.choice(suits)) 
             remove_cards(player_hand, "end")
             player_score = hand_total(player_hand)
+
             try:
-                card = load_cards(str(player_hand[card_num_player]).lower(), "_heart")
+                card = load_cards(str(player_hand[card_num_player]).lower(), player_suits[card_num_player])
             except FileNotFoundError:
-                card = load_cards(str(player_hand[card_num_player][0]).lower(), "_heart")
+                card = load_cards(str(player_hand[card_num_player][0]).lower(), player_suits[card_num_player])
             card_size = pygame.transform.scale(card[-1], (100, 150))
             screen.blit(card_size, (100+(card_num_player*50), 300))
             card_num_player += 1
             print(player_hand)
 
         if stand_button.draw(screen):
-            dealer_hand.append(random.choice(deck))  
+            dealer_hand.append(random.choice(deck))
+            dealer_suits.append(random.choice(suits))   
             remove_cards(dealer_hand, "end")
             dealer_score = hand_total(dealer_hand)
+
             try:
-                card = load_cards(str(dealer_hand[card_num_dealer]).lower(), "_heart")
+                card = load_cards(str(dealer_hand[card_num_dealer]).lower(), dealer_suits[card_num_dealer])
             except FileNotFoundError:
-                card = load_cards(str(dealer_hand[card_num_dealer][0]).lower(), "_heart")
+                card = load_cards(str(dealer_hand[card_num_dealer][0]).lower(), dealer_suits[card_num_dealer])
             card_size = pygame.transform.scale(card[-1], (100, 150))
             screen.blit(card_size, (100+(card_num_dealer*50), 10))
-            card_num_dealer += 1
+
+            try:
+                card = load_cards(dealer_hand[0], dealer_suits[0])
+            except:
+                card = load_cards(str(dealer_hand[0][0]).lower(), dealer_suits[0])
+                
+            card_size = pygame.transform.scale(card[-1], (100, 150))
+            screen.blit(card_size, (100, 10))
+            pygame.display.update()
+
+            pygame.time.delay(1000)
             round_over = True
 
         pygame.display.update()
 
-        if player_score > 21:                           
+        if player_score > 21:  
+            pygame.time.delay(1000)                                     
             round_over = True
 
         elif dealer_score > 21:
@@ -476,30 +517,16 @@ def run_blackjack():
             elif player_score == dealer_score:
                 print("It's a Tie")
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
 
-def end_screen(result):
-    if result == "lose":
-        background_img = pygame.image.load("lose_screen.png").convert()
-        scaled_background = pygame.transform.scale(
-        background_img, (screen_width, screen_height)
-        )
-    elif result == "win":
-        end_screen = pygame.image.load(f"win_screen.jpeg").convert_alpha()
-        scaled_end_screen = pygame.transform.scale(wnd_screen, (screen_width, screen_height))
-        screen.blit(scaled_end_screen,(0,0))
-
-    screen.fill((0, 0, 0))  # CLEAR screen to prevent menu leak
-    screen.blit(scaled_background, (0, 0))  # Draw blackjack background
 
 
 # === Main Game Loop ===
 game_state = "menu"
 running = True
-
 
 while running:
     if game_state == "menu":
@@ -519,6 +546,7 @@ while running:
                 running = False
 
     elif game_state == "blackjack":
+        deck = cards*4
         run_blackjack()
         game_state = "menu"  # Return to menu after blackjack
 
